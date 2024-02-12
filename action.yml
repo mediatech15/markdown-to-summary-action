@@ -1,0 +1,38 @@
+name: Markdown to Summary
+description: A GitHub Action to output a markdown file to an Action Check for that run.
+author: medaitech15
+branding:
+  icon: file-text
+  color: orange
+
+inputs:
+  file:
+    required: true
+    description: the file to make into a check summary. If artifact is used then it will be the path within the artifact.
+  artifact:
+    required: false
+    default: ""
+    description: an artifact to retrieve for getting the file
+  check_name:
+    required: false
+    default: ""
+    description: the name of the check to use. Defaults to the file name.
+  conclusion:
+    required: false
+    default: success
+    description: |
+      the result of the check. Default is 'success'.
+      Options are:
+        - success
+        - failure
+        - neutral
+        - action_required
+      The 'timed_out', 'skipped', 'cancelled', 'stale' options are not allowed. (not relevant to action)
+  token:
+    required: false
+    default: ${{ github.token }}
+    description: the token to use for operations. Default is GITHUB_TOKEN
+
+runs:
+  using: node20
+  main: dist/index.js
