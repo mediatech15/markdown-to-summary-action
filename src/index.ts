@@ -43,6 +43,8 @@ const parseInput = (): Inputs => {
   if (!CONCLUSION_VALUES.includes(inputs.conclusion)) {
     core.setFailed(`Conclusion value of ${inputs.conclusion} is not valid. Values can be ${CONCLUSION_VALUES.join(',')}`)
   }
+  core.debug('inputs')
+  core.debug(JSON.stringify(inputs))
   return inputs
 }
 
