@@ -111,7 +111,12 @@ async function run (): Promise<void> {
     const inputs = parseInput()
     const context = gh.context
     const octokit = gh.getOctokit(inputs.token)
-    const dlFile = await getArtifact(inputs)
+    let dlFile: string
+    if (inputs.artifact !== '') {
+      dlFile = await getArtifact(inputs)
+    } else {
+      dlFile = inputs.file
+    }
     await createCheck(dlFile, octokit, context, inputs)
   } catch (error) {
     if (error instanceof Error) core.setFailed(error)
