@@ -58,7 +58,7 @@ const getArtifact = async (inputs: Inputs): Promise<string> => {
     const { downloadPath } = await artifact.downloadArtifact(id, {
       path: `./${randomUUID()}`
     })
-    core.debug(downloadPath ?? '')
+    fs.readdirSync(downloadPath ?? '').forEach(v => core.debug(v))
     if (downloadPath !== undefined) {
       if (!fs.existsSync(core.toPlatformPath(`${downloadPath}/${inputs.file}`))) {
         core.setFailed(`Downloaded artifact did not contain file at specified input: ${inputs.file}`)
