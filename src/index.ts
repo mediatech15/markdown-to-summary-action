@@ -5,6 +5,7 @@ import { GitHub } from '@actions/github/lib/utils'
 import { DefaultArtifactClient } from '@actions/artifact'
 import { Context } from '@actions/github/lib/context'
 import { randomUUID } from 'crypto'
+import * as path from 'path'
 
 const CONCLUSION_VALUES = [
   'success',
@@ -42,6 +43,9 @@ const parseInput = (): Inputs => {
   }
   if (!CONCLUSION_VALUES.includes(inputs.conclusion)) {
     core.setFailed(`Conclusion value of ${inputs.conclusion} is not valid. Values can be ${CONCLUSION_VALUES.join(',')}`)
+  }
+  if (inputs.check_name === '') {
+    inputs.check_name = path.basename(inputs.file)
   }
   core.debug('inputs')
   core.debug(JSON.stringify(inputs))
