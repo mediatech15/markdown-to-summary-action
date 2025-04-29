@@ -46,7 +46,7 @@ const parseInput = (): Inputs => {
   if (inputs.file === '' && inputs.artifact !== '') {
     core.setFailed('Provided artifact with no file path')
   }
-  if (!fs.existsSync(inputs.file) && inputs.artifact === '') {
+  if (inputs.md === '' && !fs.existsSync(inputs.file) && inputs.artifact === '') {
     core.setFailed(`Could not find file ${inputs.file}`)
   }
   if (!CONCLUSION_VALUES.includes(inputs.conclusion)) {
