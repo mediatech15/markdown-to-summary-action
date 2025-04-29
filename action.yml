@@ -7,8 +7,13 @@ branding:
 
 inputs:
   file:
-    required: true
+    required: false
+    default: ""
     description: the file to make into a check summary. If artifact is used then it will be the path within the artifact.
+  markdown:
+    required: false
+    default: ""
+    description: the markdown string to render. You can not use this with a file based option.
   artifact:
     required: false
     default: ""

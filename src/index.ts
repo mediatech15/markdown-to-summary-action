@@ -7,6 +7,8 @@ import { Context } from '@actions/github/lib/context'
 import { randomUUID } from 'crypto'
 import * as path from 'path'
 
+type Conclusions = 'success' | 'failure' | 'neutral' | 'action_required' | 'cancelled' | 'skipped' | 'stale' | 'timed_out' | undefined
+
 const CONCLUSION_VALUES = [
   'success',
   'failure',
@@ -20,6 +22,7 @@ interface Inputs {
   check_name: string
   conclusion: string
   token: string
+  md: string
 }
 
 const parseInput = (): Inputs => {
@@ -28,13 +31,18 @@ const parseInput = (): Inputs => {
     artifact: '',
     check_name: '',
     conclusion: '',
-    token: ''
+    token: '',
+    md: ''
   }
-  inputs.file = core.getInput('file', { required: true })
+  inputs.file = core.getInput('file', { required: false })
+  inputs.md = core.getInput('markdown', { required: false })
   inputs.artifact = core.getInput('artifact', { required: false })
   inputs.check_name = core.getInput('check_name', { required: false })
   inputs.conclusion = core.getInput('conclusion', { required: false })
   inputs.token = core.getInput('token', { required: false })
+  if (inputs.md !== '' && (inputs.file !== '' || inputs.artifact !== '')) {
+    core.setFailed('Provided Markdown while also providing a file based option')
+  }
   if (inputs.file === '' && inputs.artifact !== '') {
     core.setFailed('Provided artifact with no file path')
   }
@@ -77,29 +85,19 @@ const getArtifact = async (inputs: Inputs): Promise<string> => {
   return ''
 }
 
-const getConclusion = (inputs: Inputs): 'success' | 'failure' | 'neutral' | 'action_required' => {
-  if (inputs.conclusion === 'success') {
-    return 'success'
+const createCheck = async (file: string, isFile: boolean, octokit: InstanceType<typeof GitHub>, context: Context, inputs: Inputs): Promise<void> => {
+  let mdFile = ''
+  if (isFile) {
+    mdFile = fs.readFileSync(file).toString('utf-8')
+  } else {
+    mdFile = file
   }
-  if (inputs.conclusion === 'failure') {
-    return 'failure'
-  }
-  if (inputs.conclusion === 'neutral') {
-    return 'neutral'
-  }
-  if (inputs.conclusion === 'action_required') {
-    return 'action_required'
-  }
-  return 'neutral'
-}
 
-const createCheck = async (file: string, octokit: InstanceType<typeof GitHub>, context: Context, inputs: Inputs): Promise<void> => {
-  const mdFile = fs.readFileSync(file).toString('utf-8')
   const createResp = await octokit.rest.checks.create({
     head_sha: context.sha,
     name: inputs.check_name,
     status: 'completed',
-    conclusion: getConclusion(inputs),
+    conclusion: inputs.conclusion as Conclusions,
     output: {
       title: inputs.check_name,
       summary: '',
@@ -121,10 +119,14 @@ async function run (): Promise<void> {
     let dlFile: string
     if (inputs.artifact !== '') {
       dlFile = await getArtifact(inputs)
+      await createCheck(dlFile, true, octokit, context, inputs)
     } else {
-      dlFile = inputs.file
+      if (inputs.md !== '') {
+        await createCheck(inputs.md, false, octokit, context, inputs)
+      } else {
+        await createCheck(inputs.file, true, octokit, context, inputs)
+      }
     }
-    await createCheck(dlFile, octokit, context, inputs)
   } catch (error) {
     if (error instanceof Error) core.setFailed(error)
     else core.setFailed(JSON.stringify(error))
